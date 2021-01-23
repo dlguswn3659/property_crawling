@@ -67,21 +67,9 @@ def townguparsing(cityname, guname, townname):
     print("파싱함수 실행됨")
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
-######################################
-    # table = soup.find('table', { 'class': 'table_develop3' })    # <table class="table_develop3">을 찾음
-    # data = []                            # 데이터를 저장할 리스트 생성
-    # for tr in table.find_all('tr'):      # 모든 <tr> 태그를 찾아서 반복(각 지점의 데이터를 가져옴)
-    #     tds = list(tr.find_all('td'))    # 모든 <td> 태그를 찾아서 리스트로 만듦
-    #                                     # (각 날씨 값을 리스트로 만듦)
-    #     for td in tds:                   # <td> 태그 리스트 반복(각 날씨 값을 가져옴)
-    #         if td.find('a'):             # <td> 안에 <a> 태그가 있으면(지점인지 확인)
-    #             point = td.find('a').text    # <a> 태그 안에서 지점을 가져옴
-    #             temperature = tds[5].text    # <td> 태그 리스트의 여섯 번째(인덱스 5)에서 기온을 가져옴
-    #             humidity = tds[9].text       # <td> 태그 리스트의 열 번째(인덱스 9)에서 습도를 가져옴
-    #             data.append([point, temperature, humidity])    # data 리스트에 지점, 기온, 습도를 추가
-    
-    # data    # data 표시. 주피터 노트북에서는 print를 사용하지 않아도 변수의 값이 표시됨
-#####################################
+
+
+
     # table = soup.find('table', class="list_basic")
     table = soup.find("table",{'class' : 'list_basic'}) 
     tbody = table.tbody
@@ -90,14 +78,6 @@ def townguparsing(cityname, guname, townname):
     # firstbody = str(tr.get_text())
     print(firstbody)
 
-    # f = open("/content/property_crawling.xls", 'a')
-    # f.write(';;' + '삭제탭' +';')
-    # f.write(cityname)
-    # f.write(';')
-    # f.write(guname)
-    # f.write(';')
-    # f.write(townname)
-
     tmp = firstbody.replace('\n', ';')
     cigutown = str('\n;;' + '삭제탭' +';'+ cityname +';'+ guname +';' + townname + ';')
     tmp2 = tmp.replace(';;;', cigutown)
@@ -105,29 +85,6 @@ def townguparsing(cityname, guname, townname):
     # f.write('\n')
     print(cigutown)
     print("입력 완료")
-
-
-#단지 파싱    
-# def complexuparsing(townname, complexname):
-#     html = driver.page_source
-#     soup = BeautifulSoup(html, 'html.parser')
-
-#     table = soup.find('table', class_="default")
-#     tbody = table.tbody
-#     firstbody = str(tbody.get_text())
-#     print(firstbody)
-
-#     f = open("/content/property_crawling.xls", 'a')
-#     f.write(';;' + '삭제탭' +';')
-#     f.write(townname)
-#     f.write(';')
-#     f.write(complexname)
-
-#     tmp = firstbody.replace('\n', ';')
-#     tocom = str('\n;;' + '삭제탭' +';'+ towname +';' + complexname + ';')
-#     tmp2 = tmp.replace(';;;', tocom)
-#     f.write(tmp2)
-#     f.write('\n')
 
 ##############################  table_to_2d.py  ################################
 
