@@ -61,4 +61,7 @@ ex) "C:\\Users\\HyunjuLee\\AppData\\Local\\Programs\\Python\\Python39\\"
     또는
     https://studyhard24.tistory.com/234 -> beautifulsoup 설치 링크 참고
 
+5. 매크로 봇 탐지를 피하기 위한 세팅하기
+    1. random ip로 크롤링. tor 설치(링크 : https://www.torproject.org/download/)
+
 5. python main.py

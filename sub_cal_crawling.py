@@ -1,0 +1,165 @@
+from urllib.request import urlopen
+from bs4 import BeautifulSoup
+from selenium.webdriver.support.select import Select
+from selenium import webdriver
+from bs4 import BeautifulSoup
+import requests
+import pandas as pd
+import time
+from itertools import product
+import pprint
+
+chrome_options = webdriver.ChromeOptions()  # webdriver의 크롬 옵션 객체 생성
+chrome_options.add_argument("--incognito")  # 크롬 옵션에 시크릿 모드 추가
+chrome_options.add_argument('--headless')
+chrome_options.add_argument('--no-sandbox')
+chrome_options.add_argument('--disable-dev-shm-usage')
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--disable-features=NetworkService")
+chrome_options.add_argument("--window-size=1920x1080")
+chrome_options.add_argument("--disable-features=VizDisplayCompositor")
+driver = webdriver.Chrome('./chromedriver.exe', options=chrome_options) # 위에서 만든 크롬 옵션을 적용하여 크롬창 생성]
+chrome_options.add_argument('--proxy-server=socks5://127.0.0.1:9050')   # tor로 proxy server로 바뀐 아이피로 크롤링.
+
+chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
+chrome_options.add_argument("app-version=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
+
+driver.implicitly_wait(3)
+
+#웹페이지 불러오기
+driver.get('https://www.applyhome.co.kr/ai/aib/selectSubscrptCalenderView.do')
+
+
+def table_to_2d(table_tag):
+    rowspans = []  # track pending rowspans
+    rows = table_tag.find_all('tr')
+
+    # first scan, see how many columns we need
+    colcount = 0
+    for r, row in enumerate(rows):
+        cells = row.find_all(['td', 'th'], recursive=False)
+        # count columns (including spanned).
+        # add active rowspans from preceding rows
+        # we *ignore* the colspan value on the last cell, to prevent
+        # creating 'phantom' columns with no actual cells, only extended
+        # colspans. This is achieved by hardcoding the last cell width as 1. 
+        # a colspan of 0 means “fill until the end” but can really only apply
+        # to the last cell; ignore it elsewhere. 
+        colcount = max(
+            colcount,
+            sum(int(c.get('colspan', 1)) or 1 for c in cells[:-1]) + len(cells[-1:]) + len(rowspans))
+        # update rowspan bookkeeping; 0 is a span to the bottom. 
+        rowspans += [int(c.get('rowspan', 1)) or len(rows) - r for c in cells]
+        rowspans = [s - 1 for s in rowspans if s > 1]
+
+    # it doesn't matter if there are still rowspan numbers 'active'; no extra
+    # rows to show in the table means the larger than 1 rowspan numbers in the
+    # last table row are ignored.
+
+    # build an empty matrix for all possible cells
+    table = [[None] * colcount for row in rows]
+
+    # fill matrix from row data
+    rowspans = {}  # track pending rowspans, column number mapping to count
+    for row, row_elem in enumerate(rows):
+        span_offset = 0  # how many columns are skipped due to row and colspans 
+        for col, cell in enumerate(row_elem.find_all(['td', 'th'], recursive=False)):
+            # adjust for preceding row and colspans
+            col += span_offset
+            while rowspans.get(col, 0):
+                span_offset += 1
+                col += 1
+
+            # fill table data
+            rowspan = rowspans[col] = int(cell.get('rowspan', 1)) or len(rows) - row
+            colspan = int(cell.get('colspan', 1)) or colcount - col
+            # next column is offset by the colspan
+            span_offset += colspan - 1
+            value = cell.get_text()
+            for drow, dcol in product(range(rowspan), range(colspan)):
+                try:
+                    table[row + drow][col + dcol] = value
+                    rowspans[col + dcol] = rowspan
+                except IndexError:
+                    # rowspan or colspan outside the confines of the table
+                    pass
+
+        # update rowspan bookkeeping
+        rowspans = {c: s - 1 for c, s in rowspans.items() if s > 1}
+
+    return table
+
+
+if __name__ == "__main__" :
+    time.sleep(1)
+    html = driver.page_source
+    soup = BeautifulSoup(html, 'html.parser')
+    print("여기까진 온거야?")
+    
+    table = soup.find("table",{'class' : 'tbl_st'}) 
+    # td = table.td
+    for dateNum in range(1, 2):
+        try:
+            driver.get('https://www.applyhome.co.kr/ai/aib/selectSubscrptCalenderView.do')
+            time.sleep(1)
+            date = table.find("td",{'data-ids' : str(dateNum)})
+            print(str(date.get_text()))
+            popup = driver.find_element_by_xpath("//*[@id='calTable']/tbody/tr[1]/td[2]/a[1]")
+            print("a태그 찾음")
+            print(popup)
+            popup.click()
+            print("클릭함")
+            time.sleep(3)
+            print("1초 지남")
+            html = driver.page_source
+            print("html 불러옴")
+            soup = BeautifulSoup(html, 'html.parser')
+            iframe = driver.find_elements_by_tag_name('iframe')[0]
+            driver.switch_to.frame(iframe)
+
+            html = driver.page_source
+            soup = BeautifulSoup(html, 'html.parser')
+            # iframe = soup.find("iframe")
+            basic_table = soup.find("table", {'class' : 'tbl_st tbl_normal tbl_center'})
+
+
+            table_list = soup.find_all('table')
+
+            # pprint.pprint(table_to_2d(basic_table), width=30)
+            ## 기본정보 ##
+            print("기본정보")
+            print(table_to_2d(basic_table))
+
+            ## 청약일정 ##
+            print("청약일정")
+            schedule_table = soup.find("table", {'class' : 'tbl_st tbl_row tbl_col tbl_center'})
+            print(table_to_2d(schedule_table))
+
+            ## 공급대상 ##
+            print("공급대상")
+            target_table = table_list[2]
+            print(table_to_2d(target_table))
+
+            ## 특별공급 공급대상 ##
+            print("특별공급 공급대상")
+            special_target_table = table_list[3]
+            print(table_to_2d(special_target_table))
+
+
+            ## 공급금액, 2순위 청약금 및 입주예정월 ##
+            print("공급금액, 2순위 청약금 및 입주예정월")
+            cost_table = table_list[4]
+            print(table_to_2d(cost_table))
+
+
+            ## 기타사항 ##
+            etc_table = table_list[5]
+            print("기타사항")
+            print(table_to_2d(etc_table))
+        
+        except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
+            print('예외가 발생했습니다.', e)
+            pass
+    
+    # firstbody = str(table.get_text())
+    # print(firstbody)

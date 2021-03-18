@@ -14,7 +14,15 @@ chrome_options.add_argument("--incognito")  # 크롬 옵션에 시크릿 모드 
 chrome_options.add_argument('--headless')
 chrome_options.add_argument('--no-sandbox')
 chrome_options.add_argument('--disable-dev-shm-usage')
+chrome_options.add_argument("--disable-gpu")
+chrome_options.add_argument("--disable-features=NetworkService")
+chrome_options.add_argument("--window-size=1920x1080")
+chrome_options.add_argument("--disable-features=VizDisplayCompositor")
 driver = webdriver.Chrome('./chromedriver.exe', options=chrome_options) # 위에서 만든 크롬 옵션을 적용하여 크롬창 생성]
+chrome_options.add_argument('--proxy-server=socks5://127.0.0.1:9050')   # tor로 proxy server로 바뀐 아이피로 크롤링.
+
+chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
+chrome_options.add_argument("app-version=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
 
 driver.implicitly_wait(3)
 
