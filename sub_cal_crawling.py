@@ -8,6 +8,43 @@ import pandas as pd
 import time
 from itertools import product
 import pprint
+import csv
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+
+
+# Firebase database 인증 및 앱 초기화
+cred = credentials.Certificate(
+    'ziptalk-chatbot-firebase-adminsdk-kz477-4cadf62941.json')
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://ziptalk-chatbot-default-rtdb.firebaseio.com/'
+})
+
+dir = db.reference()  # 기본 위치 지정
+dir.update({'청약정보': []})
+
+dir = db.reference('청약정보')
+dir.push({'실시간정보': [{'날짜': '2021-03-22'},
+                        {'아파트정보':  [{'아파트명': '김천더테라스휴'}, 
+                                        {'공급위치': '경상북도 김천시 어모면 중왕리 686-1번지'}, 
+                                        {'공급규모': '176세대'}, 
+                                        {'문의처': '054-436-0888'}]}, 
+                        {'청약일정':    [{'모집공고일': '2021-02-19'}, 
+                                        {'청약접수':    [{'구분명':'특별공급'}, 
+                                                        {'해당지역 접수일':'2021-03-02'}, 
+                                                        {'기타지역 접수일': '2021-03-03'}, 
+                                                        {'접수장소':'인터넷'}]}, 
+                                        {'당첨자 발표일': '2021-03-10'}, 
+                                        {'계약일': '2021-03-22 ~ 2021-03-24'}]}]})
+
+# dir = db.reference('청약정보/실시간정보/날짜')
+# dir.update({'date': '2021-03-22'})
+# dir = db.reference('청약정보/아파트정보')
+# dir.update({'아파트명': '김천더테라스휴'})
+# dir.update({'공급규모': '176세대'})
+# dir.update({'문의처': '054-436-0888'})
+
 
 chrome_options = webdriver.ChromeOptions()  # webdriver의 크롬 옵션 객체 생성
 chrome_options.add_argument("--incognito")  # 크롬 옵션에 시크릿 모드 추가
@@ -18,15 +55,19 @@ chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--disable-features=NetworkService")
 chrome_options.add_argument("--window-size=1920x1080")
 chrome_options.add_argument("--disable-features=VizDisplayCompositor")
-driver = webdriver.Chrome('./chromedriver.exe', options=chrome_options) # 위에서 만든 크롬 옵션을 적용하여 크롬창 생성]
-chrome_options.add_argument('--proxy-server=socks5://127.0.0.1:9050')   # tor로 proxy server로 바뀐 아이피로 크롤링.
+# 위에서 만든 크롬 옵션을 적용하여 크롬창 생성]
+driver = webdriver.Chrome('./chromedriver.exe', options=chrome_options)
+# tor로 proxy server로 바뀐 아이피로 크롤링.
+chrome_options.add_argument('--proxy-server=socks5://127.0.0.1:9050')
 
-chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
-chrome_options.add_argument("app-version=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
+chrome_options.add_argument(
+    "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
+chrome_options.add_argument(
+    "app-version=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.75 Safari/537.36")
 
 driver.implicitly_wait(3)
 
-#웹페이지 불러오기
+# 웹페이지 불러오기
 driver.get('https://www.applyhome.co.kr/ai/aib/selectSubscrptCalenderView.do')
 
 
@@ -42,13 +83,13 @@ def table_to_2d(table_tag):
         # add active rowspans from preceding rows
         # we *ignore* the colspan value on the last cell, to prevent
         # creating 'phantom' columns with no actual cells, only extended
-        # colspans. This is achieved by hardcoding the last cell width as 1. 
+        # colspans. This is achieved by hardcoding the last cell width as 1.
         # a colspan of 0 means “fill until the end” but can really only apply
-        # to the last cell; ignore it elsewhere. 
+        # to the last cell; ignore it elsewhere.
         colcount = max(
             colcount,
             sum(int(c.get('colspan', 1)) or 1 for c in cells[:-1]) + len(cells[-1:]) + len(rowspans))
-        # update rowspan bookkeeping; 0 is a span to the bottom. 
+        # update rowspan bookkeeping; 0 is a span to the bottom.
         rowspans += [int(c.get('rowspan', 1)) or len(rows) - r for c in cells]
         rowspans = [s - 1 for s in rowspans if s > 1]
 
@@ -62,7 +103,7 @@ def table_to_2d(table_tag):
     # fill matrix from row data
     rowspans = {}  # track pending rowspans, column number mapping to count
     for row, row_elem in enumerate(rows):
-        span_offset = 0  # how many columns are skipped due to row and colspans 
+        span_offset = 0  # how many columns are skipped due to row and colspans
         for col, cell in enumerate(row_elem.find_all(['td', 'th'], recursive=False)):
             # adjust for preceding row and colspans
             col += span_offset
@@ -71,7 +112,8 @@ def table_to_2d(table_tag):
                 col += 1
 
             # fill table data
-            rowspan = rowspans[col] = int(cell.get('rowspan', 1)) or len(rows) - row
+            rowspan = rowspans[col] = int(
+                cell.get('rowspan', 1)) or len(rows) - row
             colspan = int(cell.get('colspan', 1)) or colcount - col
             # next column is offset by the colspan
             span_offset += colspan - 1
@@ -90,21 +132,26 @@ def table_to_2d(table_tag):
     return table
 
 
-if __name__ == "__main__" :
+if __name__ == "__main__":
     time.sleep(1)
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
     print("여기까진 온거야?")
-    
-    table = soup.find("table",{'class' : 'tbl_st'}) 
+
+    f = open(f'subscription.csv', 'a', encoding='utf-8', newline='')
+    wr = csv.writer(f)
+
+    table = soup.find("table", {'class': 'tbl_st'})
     # td = table.td
     for dateNum in range(1, 2):
         try:
-            driver.get('https://www.applyhome.co.kr/ai/aib/selectSubscrptCalenderView.do')
+            driver.get(
+                'https://www.applyhome.co.kr/ai/aib/selectSubscrptCalenderView.do')
             time.sleep(1)
-            date = table.find("td",{'data-ids' : str(dateNum)})
+            date = table.find("td", {'data-ids': str(dateNum)})
             print(str(date.get_text()))
-            popup = driver.find_element_by_xpath("//*[@id='calTable']/tbody/tr[1]/td[2]/a[1]")
+            popup = driver.find_element_by_xpath(
+                "//*[@id='calTable']/tbody/tr[1]/td[2]/a[1]")
             print("a태그 찾음")
             print(popup)
             popup.click()
@@ -120,11 +167,13 @@ if __name__ == "__main__" :
             html = driver.page_source
             soup = BeautifulSoup(html, 'html.parser')
             # iframe = soup.find("iframe")
-            basic_table = soup.find("table", {'class' : 'tbl_st tbl_normal tbl_center'})
-
+            basic_table = soup.find(
+                "table", {'class': 'tbl_st tbl_normal tbl_center'})
 
             table_list = soup.find_all('table')
 
+            table_name_list = [['<<기본정보>>'], ['<<청약일정>>'], ['<<공급대상>>'], [
+                '<<특별공급 공급대상>>'], ['<<공급금액, 2순위 청약금 및 입주예정월>>'], ['<<기타사항>>']]
             # pprint.pprint(table_to_2d(basic_table), width=30)
             ## 기본정보 ##
             print("기본정보")
@@ -132,7 +181,8 @@ if __name__ == "__main__" :
 
             ## 청약일정 ##
             print("청약일정")
-            schedule_table = soup.find("table", {'class' : 'tbl_st tbl_row tbl_col tbl_center'})
+            schedule_table = soup.find(
+                "table", {'class': 'tbl_st tbl_row tbl_col tbl_center'})
             print(table_to_2d(schedule_table))
 
             ## 공급대상 ##
@@ -145,21 +195,36 @@ if __name__ == "__main__" :
             special_target_table = table_list[3]
             print(table_to_2d(special_target_table))
 
-
             ## 공급금액, 2순위 청약금 및 입주예정월 ##
             print("공급금액, 2순위 청약금 및 입주예정월")
             cost_table = table_list[4]
             print(table_to_2d(cost_table))
 
-
             ## 기타사항 ##
             etc_table = table_list[5]
             print("기타사항")
             print(table_to_2d(etc_table))
-        
+            print(table_to_2d(etc_table)[0])
+            print(len(table_to_2d(etc_table)))
+            table_order = [basic_table, schedule_table, target_table,
+                           special_target_table, cost_table, etc_table]
+
+            # wr.writerow(table_to_2d(basic_table))
+            # wr.writerow(table_to_2d(schedule_table))
+            # wr.writerow(table_to_2d(target_table))
+            # wr.writerow(table_to_2d(special_target_table))
+            # wr.writerow(table_to_2d(cost_table))
+            # wr.writerow(table_to_2d(etc_table))
+            for order in range(0, 6):
+                print(table_name_list[order])
+                wr.writerow(table_name_list[order], )
+                for i in range(0, len(table_to_2d(table_order[order]))):
+                    print((table_to_2d(table_order[order]))[i])
+                    wr.writerow(table_to_2d(table_order[order])[i])
+
         except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
             print('예외가 발생했습니다.', e)
             pass
-    
+
     # firstbody = str(table.get_text())
     # print(firstbody)
