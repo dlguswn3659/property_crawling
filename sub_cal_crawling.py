@@ -391,9 +391,9 @@ if __name__ == "__main__":
                                             print((table_to_2d(table_order[order]))[i+3][3])
                                             print((table_to_2d(table_order[order]))[i+3][4])
                                             
-                                    # else:
-                                    #     print((table_to_2d(table_order[order]))[i][1])
-                                    #     local_date[0] = (table_to_2d(table_order[order]))[i][1]
+                                    else:
+                                        print((table_to_2d(table_order[order]))[i][1])
+                                        local_date[0] = (table_to_2d(table_order[order]))[i][1]
 
                                 
                                 elif((table_to_2d(table_order[order]))[i][0] == "당첨자 발표일"):
