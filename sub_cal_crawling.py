@@ -29,29 +29,29 @@ firebase_admin.initialize_app(cred, {
 
 db = firestore.client()
 
-doc_ref = db.collection(u'subscription_info').document()
-doc_ref.set({
-    'realtime_info':   {'date': '2021-03-22',
-                    'apt_info':  {'apt_name': '김천더테라스휴',
-                                    'address': '경상북도 김천시 어모면 중왕리 686-1번지',
-                                    'sup_size': '176세대',
-                                    'tel': '054-436-0888'},
-                    'sub_sch':    {'ann_date': '2021-02-19',
-                                    'sub_rec':    [{'class_name': '특별공급',
-                                                    'local_date': '2021-03-02',
-                                                    'other_date': '2021-03-03',
-                                                    'recept_place': '인터넷'},
-                                                    {'class_name': '1순위',
-                                                    'local_date': '2021-03-02',
-                                                    'other_date': '2021-03-03',
-                                                    'recept_place': '인터넷'},
-                                                    {'class_name': '2순위',
-                                                    'local_date': '2021-03-02',
-                                                    'other_date': '2021-03-03',
-                                                    'recept_place': '인터넷'}],
-                                    'winner_date': '2021-03-10',
-                                    'contract_date': '2021-03-22 ~ 2021-03-24'}}
-})
+# doc_ref = db.collection(u'subscription_info').document()
+# doc_ref.set({
+#     'realtime_info':   {'date': '2021-03-22',
+#                     'apt_info':  {'apt_name': '김천더테라스휴',
+#                                     'address': '경상북도 김천시 어모면 중왕리 686-1번지',
+#                                     'sup_size': '176세대',
+#                                     'tel': '054-436-0888'},
+#                     'sub_sch':    {'ann_date': '2021-02-19',
+#                                     'sub_rec':    [{'class_name': '특별공급',
+#                                                     'local_date': '2021-03-02',
+#                                                     'other_date': '2021-03-03',
+#                                                     'recept_place': '인터넷'},
+#                                                     {'class_name': '1순위',
+#                                                     'local_date': '2021-03-02',
+#                                                     'other_date': '2021-03-03',
+#                                                     'recept_place': '인터넷'},
+#                                                     {'class_name': '2순위',
+#                                                     'local_date': '2021-03-02',
+#                                                     'other_date': '2021-03-03',
+#                                                     'recept_place': '인터넷'}],
+#                                     'winner_date': '2021-03-10',
+#                                     'contract_date': '2021-03-22 ~ 2021-03-24'}}
+# })
 
 # dir = db.reference()  # 기본 위치 지정
 # dir.update({'청약정보': []})
@@ -188,9 +188,9 @@ if __name__ == "__main__":
         # table = soup.find("table", {'class': 'tbl_st'})
         for tr_num in range(1, 6): # 달력 줄 번호
             for td_num in range(1, 6): # 달력 칸 번호
-                for event in range(1, 3):
+                for event in range(1, 16):
                     try:
-                        date = ""
+                        date = "2021-"
                         apt_name = ""
                         address = ""
                         sup_size = ""
@@ -216,7 +216,13 @@ if __name__ == "__main__":
 
                         # date = table.find("td", {'data-ids': str(dateNum)})
                         # print(str(date.get_text()))
-                        date = driver.find_element_by_xpath("//*[@id='calTable']/tbody/tr["+str(tr_num)+"]/td["+str(td_num)+"]/a[1]/b")
+                        # date = driver.find_elements_by_xpath("//*[@id='calTable']/tbody/tr["+str(tr_num)+"]/td["+str(td_num)+"]/a[1]/b")
+                        month_val = str(monthNum).zfill(2)
+                        date = date + month_val + '-'
+                        date_tmp = driver.find_element_by_xpath("//*[@id='calTable']/tbody/tr["+str(tr_num)+"]/td["+str(td_num)+"]/span")
+                        day_tmp = date_tmp.text
+                        day_val = day_tmp.zfill(2)
+                        date = date + day_val
                         print(date)
 
                         # popup = driver.find_element_by_xpath(
@@ -224,6 +230,12 @@ if __name__ == "__main__":
                         popup = driver.find_element_by_xpath(
                             "//*[@id='calTable']/tbody/tr["+str(tr_num)+"]/td["+str(td_num)+"]/a["+str(event)+"]")
                         print("a태그 찾음")
+                        # date = popup.find("b", {'class': 'blind'})
+                        # date = str(date.get_text())
+                        # date = popup.get_attribute("b")
+
+                        # print(date)
+                        
                         print(popup)
                         popup.click()
                         print("클릭함")
@@ -256,29 +268,31 @@ if __name__ == "__main__":
                             "table", {'class': 'tbl_st tbl_row tbl_col tbl_center'})
                         print(table_to_2d(schedule_table))
 
-                        ## 공급대상 ##
-                        print("공급대상")
-                        target_table = table_list[2]
-                        print(table_to_2d(target_table))
+                        # ## 공급대상 ##
+                        # print("공급대상")
+                        # target_table = table_list[2]
+                        # print(table_to_2d(target_table))
 
-                        ## 특별공급 공급대상 ##
-                        print("특별공급 공급대상")
-                        special_target_table = table_list[3]
-                        print(table_to_2d(special_target_table))
+                        # ## 특별공급 공급대상 ##
+                        # print("특별공급 공급대상")
+                        # special_target_table = table_list[3]
+                        # print(table_to_2d(special_target_table))
 
-                        ## 공급금액, 2순위 청약금 및 입주예정월 ##
-                        print("공급금액, 2순위 청약금 및 입주예정월")
-                        cost_table = table_list[4]
-                        print(table_to_2d(cost_table))
+                        # ## 공급금액, 2순위 청약금 및 입주예정월 ##
+                        # print("공급금액, 2순위 청약금 및 입주예정월")
+                        # cost_table = table_list[4]
+                        # print(table_to_2d(cost_table))
 
-                        ## 기타사항 ##
-                        etc_table = table_list[5]
-                        print("기타사항")
-                        print(table_to_2d(etc_table))
-                        print(table_to_2d(etc_table)[0])
-                        print(len(table_to_2d(etc_table)))
-                        table_order = [basic_table, schedule_table, target_table,
-                                    special_target_table, cost_table, etc_table]
+                        # ## 기타사항 ##
+                        # etc_table = table_list[5]
+                        # print("기타사항")
+                        # print(table_to_2d(etc_table))
+                        # print(table_to_2d(etc_table)[0])
+                        # print(len(table_to_2d(etc_table)))
+
+                        # table_order = [basic_table, schedule_table, target_table,
+                        #             special_target_table, cost_table, etc_table]
+                        table_order = [basic_table, schedule_table]
 
                         # wr.writerow(table_to_2d(basic_table))
                         # wr.writerow(table_to_2d(schedule_table))
@@ -286,59 +300,140 @@ if __name__ == "__main__":
                         # wr.writerow(table_to_2d(special_target_table))
                         # wr.writerow(table_to_2d(cost_table))
                         # wr.writerow(table_to_2d(etc_table))
-                        for order in range(0, 6):
+                        class_num = 0
+
+                        apt_name = (table_to_2d(table_order[0]))[0][0]
+                        print(apt_name)
+
+                        for order in range(0, 2):
                             # print(table_name_list[order])
-                            wr.writerow(table_name_list[order], )
+                            # wr.writerow(table_name_list[order], )
                             for i in range(0, len(table_to_2d(table_order[order]))):
                                 # print((table_to_2d(table_order[order]))[i])
                                 # print((table_to_2d(table_order[order]))[i][0])
                                 
                                 if("공급위치" in (table_to_2d(table_order[order]))[i][0]):
                                     print((table_to_2d(table_order[order]))[i][1])
+                                    address = (table_to_2d(table_order[order]))[i][1]
                                 
                                 elif("공급규모" in (table_to_2d(table_order[order]))[i][0]):
                                     print((table_to_2d(table_order[order]))[i][1])
+                                    sup_size = (table_to_2d(table_order[order]))[i][1]
                             
                                 elif("문의처" in (table_to_2d(table_order[order]))[i][0]):
                                     print((table_to_2d(table_order[order]))[i][1])
+                                    tel = (table_to_2d(table_order[order]))[i][1]
                                 
                                 elif("모집공고일" in (table_to_2d(table_order[order]))[i][0]):
                                     print((table_to_2d(table_order[order]))[i][1])
+                                    ann_date = (table_to_2d(table_order[order]))[i][1]
                                 
                                 elif("청약접수" in (table_to_2d(table_order[order]))[i][0]):
                                     if("구분" in (table_to_2d(table_order[order]))[i][1]):
                                         if("특별공급" in (table_to_2d(table_order[order]))[i+1][1]):
+                                            class_name[class_num] = (table_to_2d(table_order[order]))[i+1][1]
+                                            local_date[class_num] = (table_to_2d(table_order[order]))[i+1][2]
+                                            other_date[class_num] = (table_to_2d(table_order[order]))[i+1][3]
+                                            recept_place[class_num] = (table_to_2d(table_order[order]))[i+1][4]
+
+                                            class_num = class_num + 1
+
+                                            print((table_to_2d(table_order[order]))[i+1][1])
+                                            print((table_to_2d(table_order[order]))[i+1][2])
+                                            print((table_to_2d(table_order[order]))[i+1][3])
+                                            print((table_to_2d(table_order[order]))[i+1][4])
+                                        if("1순위" in (table_to_2d(table_order[order]))[i+1][1]):
+                                            class_name[class_num] = (table_to_2d(table_order[order]))[i+1][1]
+                                            local_date[class_num] = (table_to_2d(table_order[order]))[i+1][2]
+                                            other_date[class_num] = (table_to_2d(table_order[order]))[i+1][3]
+                                            recept_place[class_num] = (table_to_2d(table_order[order]))[i+1][4]
+
+                                            class_num = class_num + 1
+
                                             print((table_to_2d(table_order[order]))[i+1][1])
                                             print((table_to_2d(table_order[order]))[i+1][2])
                                             print((table_to_2d(table_order[order]))[i+1][3])
                                             print((table_to_2d(table_order[order]))[i+1][4])
                                         if("1순위" in (table_to_2d(table_order[order]))[i+2][1]):
+                                            class_name[class_num] = (table_to_2d(table_order[order]))[i+2][1]
+                                            local_date[class_num] = (table_to_2d(table_order[order]))[i+2][2]
+                                            other_date[class_num] = (table_to_2d(table_order[order]))[i+2][3]
+                                            recept_place[class_num] = (table_to_2d(table_order[order]))[i+2][4]
+
+                                            class_num = class_num + 1
+
+                                            print((table_to_2d(table_order[order]))[i+2][1])
+                                            print((table_to_2d(table_order[order]))[i+2][2])
+                                            print((table_to_2d(table_order[order]))[i+2][3])
+                                            print((table_to_2d(table_order[order]))[i+2][4])
+                                        if("2순위" in (table_to_2d(table_order[order]))[i+2][1]):
+                                            class_name[class_num] = (table_to_2d(table_order[order]))[i+2][1]
+                                            local_date[class_num] = (table_to_2d(table_order[order]))[i+2][2]
+                                            other_date[class_num] = (table_to_2d(table_order[order]))[i+2][3]
+                                            recept_place[class_num] = (table_to_2d(table_order[order]))[i+2][4]
+
+                                            class_num = class_num + 1
+
                                             print((table_to_2d(table_order[order]))[i+2][1])
                                             print((table_to_2d(table_order[order]))[i+2][2])
                                             print((table_to_2d(table_order[order]))[i+2][3])
                                             print((table_to_2d(table_order[order]))[i+2][4])
                                         if("2순위" in (table_to_2d(table_order[order]))[i+3][1]):
+                                            class_name[class_num] = (table_to_2d(table_order[order]))[i+3][1]
+                                            local_date[class_num] = (table_to_2d(table_order[order]))[i+3][2]
+                                            other_date[class_num] = (table_to_2d(table_order[order]))[i+3][3]
+                                            recept_place[class_num] = (table_to_2d(table_order[order]))[i+3][4]
+
+                                            class_num = class_num + 1
+
                                             print((table_to_2d(table_order[order]))[i+3][1])
                                             print((table_to_2d(table_order[order]))[i+3][2])
                                             print((table_to_2d(table_order[order]))[i+3][3])
                                             print((table_to_2d(table_order[order]))[i+3][4])
                                             
                                     # else:
-                                        # print((table_to_2d(table_order[order]))[i][1])
+                                    #     print((table_to_2d(table_order[order]))[i][1])
+                                    #     local_date[0] = (table_to_2d(table_order[order]))[i][1]
 
                                 
                                 elif((table_to_2d(table_order[order]))[i][0] == "당첨자 발표일"):
                                     print((table_to_2d(table_order[order]))[i][1])
+                                    winner_date = table_to_2d(table_order[order])[i][1]
                                     
                                 elif((table_to_2d(table_order[order]))[i][0] == "계약일"):
                                     print((table_to_2d(table_order[order]))[i][1])
-                                
+                                    contract_date = (table_to_2d(table_order[order]))[i][1]
+                        
+                        
+                        doc_ref = db.collection(u'subscription_info').document()
+                        doc_ref.set({
+                            'realtime_info':   {'date': date,
+                                            'apt_info':  {'apt_name': apt_name,
+                                                            'address': address,
+                                                            'sup_size': sup_size,
+                                                            'tel': tel},
+                                            'sub_sch':    {'ann_date': ann_date,
+                                                            'sub_rec':    [{'class_name': class_name[0],
+                                                                            'local_date': local_date[0],
+                                                                            'other_date': other_date[0],
+                                                                            'recept_place': recept_place[0]},
+                                                                            {'class_name': class_name[1],
+                                                                            'local_date': local_date[1],
+                                                                            'other_date': other_date[1],
+                                                                            'recept_place': recept_place[1]},
+                                                                            {'class_name': class_name[2],
+                                                                            'local_date': local_date[2],
+                                                                            'other_date': other_date[2],
+                                                                            'recept_place': recept_place[2]}],
+                                                            'winner_date': winner_date,
+                                                            'contract_date': contract_date}}
+                        })        
 
-                                wr.writerow(table_to_2d(table_order[order])[i])
+                                # wr.writerow(table_to_2d(table_order[order])[i])
 
                     except Exception as e:    # 모든 예외의 에러 메시지를 출력할 때는 Exception을 사용
                         print('예외가 발생했습니다.', e)
-                        pass
+                        break
 
     # firstbody = str(table.get_text())
     # print(firstbody)
